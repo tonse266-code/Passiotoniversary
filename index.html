@@ -1238,7 +1238,7 @@
 </head>
 <body>
 
-  <audio id="introMusic" src="your-song.mp3" loop preload="auto"></audio>
+  <audio id="introMusic" src="your-song.mp3" loop preload="auto" fetchpriority="high"></audio>
 
   <audio id="bgMusic" preload="none"></audio>
   <audio id="track1" src="track 1.mp3" preload="none"></audio>
@@ -2225,6 +2225,15 @@
       var blackHold = 1200;
       var colorStagger = 360;
 
+      // Give clip 1 a head start: it has the whole tile-reveal animation
+      // (several seconds) to buffer before it's actually needed.
+      if (clipWraps.length) {
+        var firstFg = clipWraps[0].querySelector('.montage-clip');
+        var firstBg = clipWraps[0].querySelector('.montage-clip-bg');
+        firstFg.preload = 'auto'; firstFg.load();
+        firstBg.preload = 'auto'; firstBg.load();
+      }
+
       cells.forEach(function (item) {
         item.img.style.transition = 'none';
         item.img.style.opacity = '0';
@@ -2285,7 +2294,17 @@
       var MAX_CLIP_SECONDS = 10;
       var CROSSFADE_MS = 1000;
       clipWraps.forEach(function (wrap) { wrap.classList.remove('is-active'); });
+      preloadClip(0);
       playClip(current);
+
+      function preloadClip(i) {
+        if (i >= clipWraps.length) return;
+        var wrap = clipWraps[i];
+        var fg = wrap.querySelector('.montage-clip');
+        var bg = wrap.querySelector('.montage-clip-bg');
+        if (fg.preload !== 'auto') { fg.preload = 'auto'; fg.load(); }
+        if (bg.preload !== 'auto') { bg.preload = 'auto'; bg.load(); }
+      }
 
       function playClip(i) {
         if (i >= clipWraps.length) return;
@@ -2298,6 +2317,10 @@
         wrap.classList.add('is-active');
         fg.play();
         bg.play();
+
+        // Start buffering the NEXT clip right away, while this one plays,
+        // so there's no black gap waiting for it when we switch over.
+        preloadClip(i + 1);
 
         function goNext() {
           if (advanced) return;
