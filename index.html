@@ -2232,16 +2232,18 @@
       var blackHold = 1200;
       var colorStagger = 360;
 
-      // Preload just the first few clips now (not all 16 at once — that was
-      // overloading the browser and causing playback lag). The rest will
-      // each get their turn to preload while the clip before them plays.
-      var upfrontPreloadCount = 3;
-      clipWraps.forEach(function (wrap, i) {
-        if (i >= upfrontPreloadCount) return;
+      // Quietly download all 16 clips' raw data in the background (cheap —
+      // just bytes into the browser's cache) WITHOUT setting up 16 full
+      // video decoders at once, which is what caused the earlier lag. When
+      // each clip's <video> element actually needs to play, it'll pull from
+      // this cache almost instantly instead of hitting the network fresh.
+      clipWraps.forEach(function (wrap) {
         var fg = wrap.querySelector('.montage-clip');
         var bg = wrap.querySelector('.montage-clip-bg');
-        fg.preload = 'auto'; fg.load();
-        bg.preload = 'auto'; bg.load();
+        [fg.getAttribute('src'), bg.getAttribute('src')].forEach(function (src) {
+          if (!src) return;
+          fetch(encodeURI(src)).catch(function () { /* ignore — falls back to normal loading */ });
+        });
       });
 
       cells.forEach(function (item) {
@@ -2326,8 +2328,10 @@
         var wrap = clipWraps[i];
         var fg = wrap.querySelector('.montage-clip');
         var bg = wrap.querySelector('.montage-clip-bg');
-        if (fg.preload !== 'auto') { fg.preload = 'auto'; fg.load(); }
-        if (bg.preload !== 'auto') { bg.preload = 'auto'; bg.load(); }
+        [fg.getAttribute('src'), bg.getAttribute('src')].forEach(function (src) {
+          if (!src) return;
+          fetch(encodeURI(src)).catch(function () {});
+        });
       }
 
       function playClip(i) {
