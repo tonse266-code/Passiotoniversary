@@ -2232,11 +2232,12 @@
       var blackHold = 1200;
       var colorStagger = 360;
 
-      // The tile-reveal + color-fill animation gives us close to 19 seconds
-      // before any clip is actually needed — use that whole window to start
-      // buffering EVERY clip, not just the first one, so far fewer of them
-      // hit a black gap waiting to load.
-      clipWraps.forEach(function (wrap) {
+      // Preload just the first few clips now (not all 16 at once — that was
+      // overloading the browser and causing playback lag). The rest will
+      // each get their turn to preload while the clip before them plays.
+      var upfrontPreloadCount = 3;
+      clipWraps.forEach(function (wrap, i) {
+        if (i >= upfrontPreloadCount) return;
         var fg = wrap.querySelector('.montage-clip');
         var bg = wrap.querySelector('.montage-clip-bg');
         fg.preload = 'auto'; fg.load();
