@@ -1974,13 +1974,6 @@
       }
 
       applyHeight();
-
-      // Once the person reaches the final newspaper page, start quietly
-      // loading the montage's photo grid in the background — their reading
-      // time here becomes free preload time before the montage even starts.
-      if (current === total) {
-        buildMontageGrid();
-      }
     }
 
     function goTo(page){
@@ -2232,19 +2225,8 @@
       var blackHold = 1200;
       var colorStagger = 360;
 
-      // Quietly download all 16 clips' raw data in the background (cheap —
-      // just bytes into the browser's cache) WITHOUT setting up 16 full
-      // video decoders at once, which is what caused the earlier lag. When
-      // each clip's <video> element actually needs to play, it'll pull from
-      // this cache almost instantly instead of hitting the network fresh.
-      clipWraps.forEach(function (wrap) {
-        var fg = wrap.querySelector('.montage-clip');
-        var bg = wrap.querySelector('.montage-clip-bg');
-        [fg.getAttribute('src'), bg.getAttribute('src')].forEach(function (src) {
-          if (!src) return;
-          fetch(encodeURI(src)).catch(function () { /* ignore — falls back to normal loading */ });
-        });
-      });
+      // (Clips are now preloaded one-at-a-time, right before each is
+      // needed, instead of all at once — see startClips().)
 
       cells.forEach(function (item) {
         item.img.style.transition = 'none';
@@ -2334,17 +2316,12 @@
         bg.play();
 
         // Only once the montage is halfway through do we start quietly
-        // building/preloading the year-page's photos and clips — by then
-        // the earlier clips have already had a clear run at the bandwidth,
-        // and there's still a good stretch of time left before we need them.
+        // building the year-page's photo grid — by then the earlier clips
+        // have already had a clear run at the bandwidth. We only set up the
+        // photos here (lightweight); the year-page's own video clips will
+        // simply load normally when their turn comes, same as before.
         if (i === Math.floor(clipWraps.length / 2) && !yearBoxesBuilt) {
           buildYearBoxes();
-          boxes.forEach(function (item) {
-            if (item.type === 'vid') {
-              item.media.preload = 'auto';
-              item.media.load();
-            }
-          });
         }
 
         // Start buffering the NEXT clip right away, while this one plays,
