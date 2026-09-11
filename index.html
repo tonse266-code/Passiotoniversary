@@ -2225,8 +2225,15 @@
       var blackHold = 1200;
       var colorStagger = 360;
 
-      // (Clips are now preloaded one-at-a-time, right before each is
-      // needed, instead of all at once — see startClips().)
+      // Clip 1 has no previous clip to hold onto while it loads, so give it
+      // a real head start using the ~19 seconds of tile-reveal/color
+      // animation time below (safe to do for just this one clip).
+      if (clipWraps.length) {
+        var firstFg = clipWraps[0].querySelector('.montage-clip');
+        var firstBg = clipWraps[0].querySelector('.montage-clip-bg');
+        firstFg.preload = 'auto'; firstFg.load();
+        firstBg.preload = 'auto'; firstBg.load();
+      }
 
       cells.forEach(function (item) {
         item.img.style.transition = 'none';
@@ -2284,66 +2291,89 @@
     }
 
     function startClips() {
-      var current = 0;
       var MAX_CLIP_SECONDS = 10;
       var CROSSFADE_MS = 1000;
       clipWraps.forEach(function (wrap) { wrap.classList.remove('is-active'); });
 
-      preloadClip(0);
-      playClip(current);
+      playClip(0, null);
 
-      function preloadClip(i) {
-        if (i >= clipWraps.length) return;
+      // Plays clip index i. prevWrap (if any) is the clip currently showing —
+      // it's kept visible until clip i is verified ready to play, so the
+      // screen is never black waiting on a download.
+      function playClip(i, prevWrap) {
+        if (i >= clipWraps.length) {
+          if (prevWrap) prevWrap.classList.remove('is-active');
+          setTimeout(goToYearPage, 1800);
+          return;
+        }
+
         var wrap = clipWraps[i];
         var fg = wrap.querySelector('.montage-clip');
         var bg = wrap.querySelector('.montage-clip-bg');
-        [fg.getAttribute('src'), bg.getAttribute('src')].forEach(function (src) {
-          if (!src) return;
-          fetch(encodeURI(src)).catch(function () {});
-        });
-      }
-
-      function playClip(i) {
-        if (i >= clipWraps.length) return;
-        var wrap = clipWraps[i];
-        var fg = wrap.querySelector('.montage-clip');
-        var bg = wrap.querySelector('.montage-clip-bg');
-        var advanced = false;
-        fg.currentTime = 0;
-        bg.currentTime = 0;
-        wrap.classList.add('is-active');
-        fg.play();
-        bg.play();
+        var started = false;
 
         // Only once the montage is halfway through do we start quietly
         // building the year-page's photo grid — by then the earlier clips
-        // have already had a clear run at the bandwidth. We only set up the
-        // photos here (lightweight); the year-page's own video clips will
-        // simply load normally when their turn comes, same as before.
+        // have already had a clear run at the bandwidth.
         if (i === Math.floor(clipWraps.length / 2) && !yearBoxesBuilt) {
           buildYearBoxes();
         }
 
-        // Start buffering the NEXT clip right away, while this one plays,
-        // so there's no black gap waiting for it when we switch over.
-        preloadClip(i + 1);
+        function reallyStart() {
+          if (started) return;
+          started = true;
 
-        function goNext() {
-          if (advanced) return;
-          advanced = true;
-          if (i + 1 < clipWraps.length) {
-            playClip(i + 1);
+          fg.currentTime = 0;
+          bg.currentTime = 0;
+          fg.play();
+          bg.play();
+          wrap.classList.add('is-active');
+
+          // Now that this clip is safely showing, fade the previous one out.
+          if (prevWrap) {
             setTimeout(function () {
-              wrap.classList.remove('is-active');
-              setTimeout(function () { fg.pause(); bg.pause(); }, CROSSFADE_MS);
+              prevWrap.classList.remove('is-active');
+              var pfg = prevWrap.querySelector('.montage-clip');
+              var pbg = prevWrap.querySelector('.montage-clip-bg');
+              setTimeout(function () { pfg.pause(); pbg.pause(); }, CROSSFADE_MS);
             }, 0);
-          } else {
-            setTimeout(goToYearPage, 1800);
           }
+
+          // Get a head start on the clip after this one, while this one plays.
+          var next = clipWraps[i + 1];
+          if (next) {
+            var nfg = next.querySelector('.montage-clip');
+            var nbg = next.querySelector('.montage-clip-bg');
+            if (nfg.preload !== 'auto') { nfg.preload = 'auto'; nfg.load(); }
+            if (nbg.preload !== 'auto') { nbg.preload = 'auto'; nbg.load(); }
+          }
+
+          var advanced = false;
+          function goNext() {
+            if (advanced) return;
+            advanced = true;
+            playClip(i + 1, wrap);
+          }
+
+          fg.onended = goNext;
+          setTimeout(goNext, MAX_CLIP_SECONDS * 1000);
         }
 
-        fg.onended = goNext;
-        setTimeout(goNext, MAX_CLIP_SECONDS * 1000);
+        // Make sure this clip is actually loading.
+        if (fg.preload !== 'auto') { fg.preload = 'auto'; fg.load(); }
+        if (bg.preload !== 'auto') { bg.preload = 'auto'; bg.load(); }
+
+        // readyState 3+ means it has enough data to play through smoothly —
+        // if it's already there (thanks to the head start above), start
+        // immediately; otherwise wait for the browser to confirm it's ready.
+        if (fg.readyState >= 3) {
+          reallyStart();
+        } else {
+          fg.addEventListener('canplay', reallyStart, { once: true });
+          // Safety net: don't wait forever if something's gone wrong with
+          // this particular file — move on rather than freezing the page.
+          setTimeout(reallyStart, 8000);
+        }
       }
     }
 
