@@ -8,10 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Great+Vibes&family=Prata:ital@0;1&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500&family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Libre+Caslon+Text:wght@400;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 <style>
-  /* ============================================================ */
-  /* ==================  ACT ZERO: heart intro  ================== */
-  /* ============================================================ */
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     width: 100%; height: 100%;
@@ -240,8 +236,6 @@
     100% { opacity: 0; transform: translate(var(--drift, 20px), -110vh) scale(1.1); }
   }
 
-  /* ============ PLAY ME INTRO SCREEN ============ */
-
   #intro-screen {
     position: fixed;
     inset: 0;
@@ -294,10 +288,6 @@
     100% { transform: scale(1.6); opacity: 0; }
   }
 
-  /* ============================================================ */
-  /* ============  ACT ONE: the newspaper flipbook  ============== */
-  /* ============================================================ */
-
   :root{
     --paper:#F7F6F2;
     --ink:#191614;
@@ -326,7 +316,7 @@
     max-width: 960px;
     margin: 0 auto;
     padding: 28px 16px 40px;
-    display: none; /* revealed only once the intro hands off to the newspaper */
+    display: none;
     opacity: 0;
     flex-direction: column;
     align-items: center;
@@ -339,7 +329,7 @@
     position: relative;
     width: 100%;
     max-width: 920px;
-    height: 1400px; /* fallback before JS measures real content height */
+    height: 1400px;
     perspective: 2800px;
     transition: height 0.5s ease;
   }
@@ -442,7 +432,6 @@
     .flipbook-shell{ padding: 20px 12px 32px; }
   }
 
-  /* ---------- Floating music control (visible once the newspaper's music starts) ---------- */
   .music-toggle{
     position: fixed;
     top: 18px;
@@ -963,10 +952,6 @@
   @media (max-width:600px){.page3 .sheet{ padding:26px 20px 60px; }.page3 .split-headline{ grid-template-columns:1fr; gap:12px; }.page3 .two-col{ grid-template-columns:1fr; }
   }
 
-  /* ============================================================ */
-  /* ==============  MEMORY MONTAGE (act two)  =================== */
-  /* ============================================================ */
-
   .montage-section {
     position: fixed;
     inset: 0;
@@ -976,7 +961,7 @@
     background: #000;
     overflow: hidden;
     z-index: 2;
-    display: none; /* revealed only once the newspaper hands off to it */
+    display: none;
     will-change: transform, filter, opacity;
   }
 
@@ -1071,8 +1056,6 @@
     z-index: 1;
   }
 
-  /* ---------- shared iris/heart wipe (montage -> year page) ---------- */
-
   .transition-overlay {
     position: fixed;
     inset: 0;
@@ -1103,10 +1086,6 @@
     opacity: 1;
     transform: scale(1) rotate(0deg);
   }
-
-  /* ============================================================ */
-  /* ==============  1 YEAR PAGE (act three)  ===================== */
-  /* ============================================================ */
 
   #yearPage {
     position: fixed;
@@ -1259,18 +1238,12 @@
 </head>
 <body>
 
-  <!--
-    Replace "your-song.mp3" below with the song that should play under the
-    heart intro. Replace "song1.mp3" / "song2.mp3" (used further down) with
-    the songs for the newspaper section, and the track/clip/image files with
-    your own media, all uploaded alongside this HTML file.
-  -->
   <audio id="introMusic" src="your-song.mp3" loop preload="auto"></audio>
 
-  <audio id="bgMusic" preload="auto"></audio>
-  <audio id="track1" src="track 1.mp3" preload="auto"></audio>
-  <audio id="track2" src="track 2.mp3" preload="auto"></audio>
-  <audio id="track3" src="track 3.mp3" preload="auto"></audio>
+  <audio id="bgMusic" preload="none"></audio>
+  <audio id="track1" src="track 1.mp3" preload="none"></audio>
+  <audio id="track2" src="track 2.mp3" preload="none"></audio>
+  <audio id="track3" src="track 3.mp3" preload="none"></audio>
 
   <div id="intro-screen">
     <div class="intro-title">for you Passion</div>
@@ -1315,7 +1288,6 @@
     <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
   </button>
 
-  <!-- ============ ACT ONE: the newspaper flipbook ============ -->
   <div class="flipbook-shell" id="flipbookShell">
 
     <div class="flipbook" id="flipbook">
@@ -1352,7 +1324,7 @@
 
     <figure class="figure">
       <div class="frame">
-        <img src="main-photo.jpg" alt="Our main photo together">
+        <img src="main-photo.jpg" alt="Our main photo together" loading="lazy">
       </div>
     </figure>
 
@@ -1371,7 +1343,7 @@
       <div class="story">
         <div class="photo-small">
           <div class="frame">
-            <video src="mountain-video.mp4" autoplay muted loop playsinline controls></video>
+            <video src="mountain-video.mp4" autoplay muted loop playsinline controls preload="none"></video>
           </div>
         </div>
         <span class="tag-small">Her Moment</span>
@@ -1381,7 +1353,7 @@
       <div class="story">
         <div class="photo-small">
           <div class="frame">
-            <img src="her-smile.jpg" alt="Her smiling">
+            <img src="her-smile.jpg" alt="Her smiling" loading="lazy">
           </div>
         </div>
         <span class="tag-small">Just Her</span>
@@ -1440,7 +1412,7 @@
         </div>
 
         <div class="photo-block">
-          <div class="frame"><img src="photo1.jpg" alt="Photo 1"></div>
+          <div class="frame"><img src="photo1.jpg" alt="Photo 1" loading="lazy"></div>
         </div>
 
         <div class="quote-box">
@@ -1448,8 +1420,8 @@
         </div>
 
         <div class="photo-pair">
-          <div class="frame"><img src="photo2.jpg" alt="Photo 2"></div>
-          <div class="frame"><img src="photo3.jpg" alt="Photo 3"></div>
+          <div class="frame"><img src="photo2.jpg" alt="Photo 2" loading="lazy"></div>
+          <div class="frame"><img src="photo3.jpg" alt="Photo 3" loading="lazy"></div>
         </div>
       </div>
 
@@ -1460,7 +1432,7 @@
 
         <div class="photo-block wide">
           <div class="frame">
-            <img src="photo4.jpg" alt="Photo 4 — hero photo">
+            <img src="photo4.jpg" alt="Photo 4 — hero photo" loading="lazy">
           </div>
         </div>
 
@@ -1476,8 +1448,8 @@
         </div>
 
         <div class="photo-pair">
-          <div class="frame"><img src="photo5.jpg" alt="Photo 5"></div>
-          <div class="frame"><img src="photo6.jpg" alt="Photo 6"></div>
+          <div class="frame"><img src="photo5.jpg" alt="Photo 5" loading="lazy"></div>
+          <div class="frame"><img src="photo6.jpg" alt="Photo 6" loading="lazy"></div>
         </div>
 
         <div class="story-block">
@@ -1494,7 +1466,7 @@
 
         <div class="photo-block">
           <div class="frame">
-            <video src="dancing-video.mp4" autoplay muted loop playsinline controls></video>
+            <video src="dancing-video.mp4" autoplay muted loop playsinline controls preload="none"></video>
           </div>
         </div>
 
@@ -1551,7 +1523,7 @@
     <div class="two-col">
       <div class="col-left">
         <div class="frame">
-          <video src="page3-video.mp4" autoplay muted loop playsinline controls></video>
+          <video src="page3-video.mp4" autoplay muted loop playsinline controls preload="none"></video>
         </div>
 
         <div class="body-text">
@@ -1565,7 +1537,7 @@
           <p>I don't say it enough, but I see it all, and I appreciate every bit of it. I love you, always.</p>
         </div>
         <div class="frame">
-          <img src="page3-photo.jpg" alt="Photo 2">
+          <img src="page3-photo.jpg" alt="Photo 2" loading="lazy">
         </div>
       </div>
     </div>
@@ -1594,38 +1566,35 @@
 
   </div>
 
-  <!-- ============ shared transition: heart iris-wipe (montage -> year page) ============ -->
   <div class="transition-overlay" id="transitionOverlay">
     <svg class="transition-heart" viewBox="0 0 24 24" fill="#e0142d">
       <path d="M12 21s-7.5-4.6-10-9.3C.4 8.3 2 5 5.4 5c2 0 3.4 1.1 4.6 2.7C11.2 6.1 12.6 5 14.6 5 18 5 19.6 8.3 22 11.7 19.5 16.4 12 21 12 21z"/>
     </svg>
   </div>
 
-  <!-- ============ ACT TWO: memory montage ============ -->
   <section class="montage-section" id="memoryMontage">
     <div class="montage-video-layer" id="montageVideoLayer">
-      <div class="montage-clip-wrap" data-clip="1"><video class="montage-clip-bg" src="clip 1.mp4" muted playsinline></video><video class="montage-clip" src="clip 1.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="2"><video class="montage-clip-bg" src="clip 2.mp4" muted playsinline></video><video class="montage-clip" src="clip 2.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="3"><video class="montage-clip-bg" src="clip 3.mp4" muted playsinline></video><video class="montage-clip" src="clip 3.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="4"><video class="montage-clip-bg" src="clip 4.mp4" muted playsinline></video><video class="montage-clip" src="clip 4.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="5"><video class="montage-clip-bg" src="clip 5.mp4" muted playsinline></video><video class="montage-clip" src="clip 5.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="6"><video class="montage-clip-bg" src="clip 6.mp4" muted playsinline></video><video class="montage-clip" src="clip 6.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="7"><video class="montage-clip-bg" src="clip 7.mp4" muted playsinline></video><video class="montage-clip" src="clip 7.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="8"><video class="montage-clip-bg" src="clip 8.mp4" muted playsinline></video><video class="montage-clip" src="clip 8.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="9"><video class="montage-clip-bg" src="clip 9.mp4" muted playsinline></video><video class="montage-clip" src="clip 9.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="10"><video class="montage-clip-bg" src="clip 10.mp4" muted playsinline></video><video class="montage-clip" src="clip 10.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="11"><video class="montage-clip-bg" src="clip 11.mp4" muted playsinline></video><video class="montage-clip" src="clip 11.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="12"><video class="montage-clip-bg" src="clip 12.mp4" muted playsinline></video><video class="montage-clip" src="clip 12.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="13"><video class="montage-clip-bg" src="clip 13.mp4" muted playsinline></video><video class="montage-clip" src="clip 13.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="14"><video class="montage-clip-bg" src="clip 14.mp4" muted playsinline></video><video class="montage-clip" src="clip 14.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="15"><video class="montage-clip-bg" src="clip 15.mp4" muted playsinline></video><video class="montage-clip" src="clip 15.mp4" muted playsinline></video></div>
-      <div class="montage-clip-wrap" data-clip="16"><video class="montage-clip-bg" src="clip 16.mp4" muted playsinline></video><video class="montage-clip" src="clip 16.mp4" muted playsinline></video></div>
+      <div class="montage-clip-wrap" data-clip="1"><video class="montage-clip-bg" src="clip 1.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 1.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="2"><video class="montage-clip-bg" src="clip 2.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 2.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="3"><video class="montage-clip-bg" src="clip 3.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 3.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="4"><video class="montage-clip-bg" src="clip 4.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 4.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="5"><video class="montage-clip-bg" src="clip 5.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 5.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="6"><video class="montage-clip-bg" src="clip 6.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 6.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="7"><video class="montage-clip-bg" src="clip 7.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 7.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="8"><video class="montage-clip-bg" src="clip 8.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 8.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="9"><video class="montage-clip-bg" src="clip 9.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 9.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="10"><video class="montage-clip-bg" src="clip 10.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 10.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="11"><video class="montage-clip-bg" src="clip 11.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 11.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="12"><video class="montage-clip-bg" src="clip 12.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 12.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="13"><video class="montage-clip-bg" src="clip 13.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 13.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="14"><video class="montage-clip-bg" src="clip 14.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 14.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="15"><video class="montage-clip-bg" src="clip 15.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 15.mp4" muted playsinline preload="none"></video></div>
+      <div class="montage-clip-wrap" data-clip="16"><video class="montage-clip-bg" src="clip 16.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 16.mp4" muted playsinline preload="none"></video></div>
     </div>
 
     <div class="montage-grid" id="montageGrid"></div>
   </section>
 
-  <!-- ============ ACT THREE: 1 Year page ============ -->
   <div id="yearPage">
     <div class="page">
       <div class="top-row">
@@ -1649,10 +1618,6 @@
   </div>
 
   <script>
-    /* ============================================================ */
-    /* ==================  ACT ZERO: heart intro  ================== */
-    /* ============================================================ */
-
     const canvas = document.getElementById('heartCanvas');
     const nameLeft = document.getElementById('nameLeft');
     const nameRight = document.getElementById('nameRight');
@@ -1914,35 +1879,23 @@
       setTimeout(() => { animationActive = false; }, 1700);
     }
 
-    // ---- Play Me intro: unlocks audio playback (browsers require a user
-    // gesture before sound can play), then kicks off the whole sequence ----
     const introScreen = document.getElementById('intro-screen');
     const playMeBtn = document.getElementById('playMeBtn');
     const introMusic = document.getElementById('introMusic');
 
     playMeBtn.addEventListener('click', () => {
       introMusic.volume = 0.7;
-      introMusic.play().catch(() => {
-        // if the browser still blocks it for some reason, it'll just stay silent
-        // rather than throwing an error in the console
-      });
+      introMusic.play().catch(() => {});
 
       introScreen.classList.add('hide');
       setTimeout(() => { introScreen.style.display = 'none'; }, 1300);
 
       startSequence();
     });
-
-    // "let's begin, baby" now hands off straight into the newspaper (Act One);
-    // see the second script block below for revealNewspaper().
   </script>
 
   <script>
   (function(){
-
-    /* ================================================================ */
-    /* ============  SHARED: iris / heart wipe transition  ============ */
-    /* ================================================================ */
 
     function irisWipe(onCovered, onOpened){
       var overlay = document.getElementById('transitionOverlay');
@@ -1970,10 +1923,6 @@
       }
       overlay.addEventListener('transitionend', onCoverEnd);
     }
-
-    /* ================================================================ */
-    /* ============  ACT ONE: newspaper flipbook  ===================== */
-    /* ================================================================ */
 
     var total = 3;
     var current = 1;
@@ -2037,7 +1986,7 @@
 
     document.addEventListener('keydown', function(e){
       var shell = document.getElementById('flipbookShell');
-      if (shell.style.display === 'none') return; // ignore page-turn keys before the newspaper is on screen
+      if (shell.style.display === 'none') return;
       if (e.key === 'ArrowRight'){
         if (current === total) transitionToMontage(); else goTo(current + 1);
       }
@@ -2076,10 +2025,6 @@
     render();
     setTimeout(remeasureAndApply, 300);
 
-    /* ================================================================ */
-    /* ============  Hand-off: newspaper -> memory montage  =========== */
-    /* ================================================================ */
-
     function transitionToMontage(){
       nextBtn.disabled = true;
       prevBtn.disabled = true;
@@ -2090,7 +2035,6 @@
       var hint = document.getElementById('flipbookHint');
       var montage = document.getElementById('memoryMontage');
 
-      // hand off the music: newspaper track stops, the montage's 3-track chain takes over
       audio.pause();
       playTrackChain(0);
 
@@ -2109,19 +2053,16 @@
           montage.style.opacity = '1';
         });
 
+        buildMontageGrid();
         playMontage();
       }, 600);
     }
-
-    /* ================================================================ */
-    /* ============  Background music + hand-off from the intro  ====== */
-    /* ================================================================ */
 
     var audio = document.getElementById('bgMusic');
     var musicToggle = document.getElementById('musicToggle');
     var song1 = 'song1.mp3';
     var song2 = 'song2.mp3';
-    var activeAudio = audio; // whichever track is currently supposed to be playing
+    var activeAudio = audio;
 
     var montageTracks = [
       document.getElementById('track1'),
@@ -2130,11 +2071,11 @@
     ];
 
     function playTrackChain(index){
-      if (index >= montageTracks.length) index = 0; // loop back to track 1 once all three have played
+      if (index >= montageTracks.length) index = 0;
       var current = montageTracks[index];
       current.currentTime = 0;
       var p = current.play();
-      if (p !== undefined) p.catch(function(){ /* ignore autoplay-block edge cases */ });
+      if (p !== undefined) p.catch(function(){});
       current.onended = function(){ playTrackChain(index + 1); };
       activeAudio = current;
       musicToggle.classList.add('playing');
@@ -2145,7 +2086,7 @@
       audio.loop = false;
       var playPromise = audio.play();
       if (playPromise !== undefined){
-        playPromise.catch(function(){ /* ignore autoplay-block edge cases */ });
+        playPromise.catch(function(){});
       }
       activeAudio = audio;
       musicToggle.classList.add('visible', 'playing');
@@ -2154,7 +2095,7 @@
     audio.addEventListener('ended', function(){
       if (audio.src.indexOf('song1.mp3') !== -1){
         audio.src = song2;
-        audio.loop = true; // keep song 2 going for the rest of the experience
+        audio.loop = true;
         audio.play();
       }
     });
@@ -2169,7 +2110,6 @@
       }
     });
 
-    // ---- "let's begin, baby" (from the heart intro) reveals the newspaper ----
     var beginBtn = document.getElementById('beginBtn');
     if (beginBtn){
       beginBtn.addEventListener('click', revealNewspaper);
@@ -2185,7 +2125,6 @@
 
       if (introMusicEl) introMusicEl.pause();
 
-      // fade out the intro's cinematic overlays
       photoSection.style.transition = 'opacity 1s ease';
       photoSection.style.opacity = '0';
       grainEl.style.transition = 'opacity 1s ease';
@@ -2195,11 +2134,9 @@
       letterTop.classList.remove('show');
       letterBottom.classList.remove('show');
 
-      // the newspaper can run taller than one screen, so let the page scroll again
       document.documentElement.style.overflow = 'auto';
       document.body.style.overflow = 'auto';
 
-      // hand off from the intro track to the newspaper's own music
       startNewspaperMusic();
 
       setTimeout(function(){
@@ -2219,42 +2156,46 @@
       }, 1000);
     }
 
-    /* ================================================================ */
-    /* ============  ACT TWO: memory montage  ========================== */
-    /* ================================================================ */
-
     var grid = document.getElementById('montageGrid');
     var clipWraps = document.querySelectorAll('#montageVideoLayer .montage-clip-wrap');
     var cols = 4;
     var rows = 4;
     var cells = [];
+    var gridBuilt = false;
 
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var index = r * cols + c + 1;
-        var cell = document.createElement('div');
-        cell.className = 'montage-cell';
-        cell.dataset.col = c;
+    function buildMontageGrid() {
+      if (gridBuilt) return;
+      gridBuilt = true;
 
-        var heart = document.createElement('div');
-        heart.className = 'montage-heart';
-        heart.innerHTML = '<svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.3 2 5 5.4 5c2 0 3.4 1.1 4.6 2.7C11.2 6.1 12.6 5 14.6 5 18 5 19.6 8.3 22 11.7 19.5 16.4 12 21 12 21z"/></svg>';
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var index = r * cols + c + 1;
+          var cell = document.createElement('div');
+          cell.className = 'montage-cell';
+          cell.dataset.col = c;
 
-        var bg = document.createElement('img');
-        bg.className = 'montage-bg';
-        bg.src = 'image ' + index + '.jpg';
-        bg.alt = '';
+          var heart = document.createElement('div');
+          heart.className = 'montage-heart';
+          heart.innerHTML = '<svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.3 2 5 5.4 5c2 0 3.4 1.1 4.6 2.7C11.2 6.1 12.6 5 14.6 5 18 5 19.6 8.3 22 11.7 19.5 16.4 12 21 12 21z"/></svg>';
 
-        var img = document.createElement('img');
-        img.className = 'montage-fg';
-        img.src = 'image ' + index + '.jpg';
-        img.alt = '';
+          var bg = document.createElement('img');
+          bg.className = 'montage-bg';
+          bg.loading = 'eager';
+          bg.src = 'image ' + index + '.jpg';
+          bg.alt = '';
 
-        cell.appendChild(bg);
-        cell.appendChild(img);
-        cell.appendChild(heart);
-        grid.appendChild(cell);
-        cells.push({ cell: cell, img: img, bg: bg, heart: heart });
+          var img = document.createElement('img');
+          img.className = 'montage-fg';
+          img.loading = 'eager';
+          img.src = 'image ' + index + '.jpg';
+          img.alt = '';
+
+          cell.appendChild(bg);
+          cell.appendChild(img);
+          cell.appendChild(heart);
+          grid.appendChild(cell);
+          cells.push({ cell: cell, img: img, bg: bg, heart: heart });
+        }
       }
     }
 
@@ -2372,10 +2313,6 @@
       });
     }
 
-    /* ================================================================ */
-    /* ============  ACT THREE: 1 Year page  ============================ */
-    /* ================================================================ */
-
     var numeral = document.getElementById('numeral');
     var yearCol = document.getElementById('yearCol');
     var bottomText = document.getElementById('bottomText');
@@ -2418,36 +2355,46 @@
 
     var boxes = [];
     var imgCursor = 0, vidCursor = 0;
+    var yearBoxesBuilt = false;
 
-    placements.forEach(function (p, i) {
-      var box = document.createElement('div');
-      box.className = 'box' + (i === 0 ? ' flag-top' : '');
-      box.style.gridColumn = p[0] + ' / span ' + p[1];
-      box.style.gridRow = p[2];
+    function buildYearBoxes() {
+      if (yearBoxesBuilt) return;
+      yearBoxesBuilt = true;
 
-      var type = typeList[i];
-      var media;
+      placements.forEach(function (p, i) {
+        var box = document.createElement('div');
+        box.className = 'box' + (i === 0 ? ' flag-top' : '');
+        box.style.gridColumn = p[0] + ' / span ' + p[1];
+        box.style.gridRow = p[2];
 
-      if (type === 'img') {
-        var n = imageNumbers[imgCursor++];
-        media = document.createElement('img');
-        media.src = 'image ' + n + '.jpg';
-        media.alt = '';
-      } else {
-        var vn = videoNumbers[vidCursor++];
-        media = document.createElement('video');
-        media.src = 'clip ' + vn + '.mp4';
-        media.muted = true;
-        media.playsInline = true;
-        media.loop = true;
-      }
+        var type = typeList[i];
+        var media;
 
-      box.appendChild(media);
-      numeral.appendChild(box);
-      boxes.push({ el: box, type: type, media: media });
-    });
+        if (type === 'img') {
+          var n = imageNumbers[imgCursor++];
+          media = document.createElement('img');
+          media.loading = 'eager';
+          media.src = 'image ' + n + '.jpg';
+          media.alt = '';
+        } else {
+          var vn = videoNumbers[vidCursor++];
+          media = document.createElement('video');
+          media.src = 'clip ' + vn + '.mp4';
+          media.muted = true;
+          media.playsInline = true;
+          media.loop = true;
+          media.preload = 'none';
+        }
+
+        box.appendChild(media);
+        numeral.appendChild(box);
+        boxes.push({ el: box, type: type, media: media });
+      });
+    }
 
     function startYearPage() {
+      buildYearBoxes();
+
       var STAGGER = 300;
       var START_DELAY = 300;
 
