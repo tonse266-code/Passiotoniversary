@@ -1891,6 +1891,16 @@
       setTimeout(() => { introScreen.style.display = 'none'; }, 1300);
 
       startSequence();
+
+      // Quietly start downloading the newspaper's first song now, in the
+      // background, so it's already buffered by the time the user clicks
+      // "let's begin" a few seconds from now instead of loading from scratch then.
+      var preloadBg = document.getElementById('bgMusic');
+      if (preloadBg) {
+        preloadBg.preload = 'auto';
+        preloadBg.src = 'song1.mp3';
+        preloadBg.load();
+      }
     });
   </script>
 
@@ -2082,7 +2092,9 @@
     }
 
     function startNewspaperMusic(){
-      audio.src = song1;
+      if (audio.src.indexOf('song1.mp3') === -1) {
+        audio.src = song1;
+      }
       audio.loop = false;
       var playPromise = audio.play();
       if (playPromise !== undefined){
@@ -2138,6 +2150,15 @@
       document.body.style.overflow = 'auto';
 
       startNewspaperMusic();
+
+      // Also start quietly buffering the montage's first track now, while
+      // the person is reading/flipping through the newspaper pages, so it's
+      // ready to go instantly once they reach the end.
+      var preloadTrack1 = document.getElementById('track1');
+      if (preloadTrack1) {
+        preloadTrack1.preload = 'auto';
+        preloadTrack1.load();
+      }
 
       setTimeout(function(){
         photoSection.style.display = 'none';
