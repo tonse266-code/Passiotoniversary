@@ -2307,19 +2307,6 @@
       var CROSSFADE_MS = 1000;
       clipWraps.forEach(function (wrap) { wrap.classList.remove('is-active'); });
 
-      // The montage plays for quite a while (up to a few minutes total) —
-      // use that time to quietly build and buffer the year-page's photos
-      // and clips in the background, so they're ready well before we get there.
-      buildYearBoxes();
-      boxes.forEach(function (item) {
-        if (item.type === 'img') {
-          // images load automatically once src is set in buildYearBoxes
-        } else {
-          item.media.preload = 'auto';
-          item.media.load();
-        }
-      });
-
       preloadClip(0);
       playClip(current);
 
@@ -2345,6 +2332,20 @@
         wrap.classList.add('is-active');
         fg.play();
         bg.play();
+
+        // Only once the montage is halfway through do we start quietly
+        // building/preloading the year-page's photos and clips — by then
+        // the earlier clips have already had a clear run at the bandwidth,
+        // and there's still a good stretch of time left before we need them.
+        if (i === Math.floor(clipWraps.length / 2) && !yearBoxesBuilt) {
+          buildYearBoxes();
+          boxes.forEach(function (item) {
+            if (item.type === 'vid') {
+              item.media.preload = 'auto';
+              item.media.load();
+            }
+          });
+        }
 
         // Start buffering the NEXT clip right away, while this one plays,
         // so there's no black gap waiting for it when we switch over.
