@@ -2363,13 +2363,21 @@
         if (fg.preload !== 'auto') { fg.preload = 'auto'; fg.load(); }
         if (bg.preload !== 'auto') { bg.preload = 'auto'; bg.load(); }
 
-        // readyState 3+ means it has enough data to play through smoothly —
-        // if it's already there (thanks to the head start above), start
-        // immediately; otherwise wait for the browser to confirm it's ready.
-        if (fg.readyState >= 3) {
+        // readyState 3+ means it has enough data to play through smoothly.
+        // For the very first clip (no previous clip to fall back on, and it
+        // already had a long head start) we hold out for full readiness —
+        // readyState 4 — to avoid an initial stutter.
+        var requiredState = prevWrap ? 3 : 4;
+        function bothReady() {
+          return fg.readyState >= requiredState && bg.readyState >= requiredState;
+        }
+
+        if (bothReady()) {
           reallyStart();
         } else {
-          fg.addEventListener('canplay', reallyStart, { once: true });
+          var onCanPlay = function () { if (bothReady()) reallyStart(); };
+          fg.addEventListener('canplay', onCanPlay);
+          bg.addEventListener('canplay', onCanPlay);
           // Safety net: don't wait forever if something's gone wrong with
           // this particular file — move on rather than freezing the page.
           setTimeout(reallyStart, 8000);
