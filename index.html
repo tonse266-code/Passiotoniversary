@@ -1974,6 +1974,13 @@
       }
 
       applyHeight();
+
+      // Once the person reaches the final newspaper page, start quietly
+      // loading the montage's photo grid in the background — their reading
+      // time here becomes free preload time before the montage even starts.
+      if (current === total) {
+        buildMontageGrid();
+      }
     }
 
     function goTo(page){
@@ -2296,6 +2303,20 @@
       var MAX_CLIP_SECONDS = 10;
       var CROSSFADE_MS = 1000;
       clipWraps.forEach(function (wrap) { wrap.classList.remove('is-active'); });
+
+      // The montage plays for quite a while (up to a few minutes total) —
+      // use that time to quietly build and buffer the year-page's photos
+      // and clips in the background, so they're ready well before we get there.
+      buildYearBoxes();
+      boxes.forEach(function (item) {
+        if (item.type === 'img') {
+          // images load automatically once src is set in buildYearBoxes
+        } else {
+          item.media.preload = 'auto';
+          item.media.load();
+        }
+      });
+
       preloadClip(0);
       playClip(current);
 
@@ -2445,15 +2466,33 @@
       var START_DELAY = 300;
 
       boxes.forEach(function (item, index) {
-        setTimeout(function () {
+        var baseDelay = START_DELAY + index * STAGGER;
+        setTimeout(function(){ revealWhenReady(item); }, baseDelay);
+      });
+
+      function revealWhenReady(item) {
+        var media = item.media;
+        var revealed = false;
+        function reveal() {
+          if (revealed) return;
+          revealed = true;
           item.el.classList.add('is-visible');
           if (item.type === 'vid') {
-            var v = item.media;
-            v.currentTime = 0;
-            v.play();
+            media.currentTime = 0;
+            media.play();
           }
-        }, START_DELAY + index * STAGGER);
-      });
+        }
+        var isReady = item.type === 'img' ? media.complete : media.readyState >= 2;
+        if (isReady) {
+          reveal();
+        } else {
+          var evt = item.type === 'img' ? 'load' : 'loadeddata';
+          media.addEventListener(evt, reveal, { once: true });
+          media.addEventListener('error', reveal, { once: true });
+          // Safety net: don't leave the box blank forever if something's slow.
+          setTimeout(reveal, 5000);
+        }
+      }
 
       var buildDone = START_DELAY + (TOTAL - 1) * STAGGER + 700;
 
