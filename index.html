@@ -2274,8 +2274,6 @@
       var CROSSFADE_MS = 1000;
       montageVideoLayer.innerHTML = '';
 
-      playClip(0, null);
-
       var pending = {};
 
       // Quietly creates clip i's video elements and starts them loading in
@@ -2409,6 +2407,8 @@
           setTimeout(reallyStart, 8000);
         }
       }
+
+      playClip(0, null);
     }
 
     function goToYearPage(){
