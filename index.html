@@ -2280,18 +2280,24 @@
 
     function startClips(onFirstClipReady) {
       var MAX_CLIP_SECONDS = 10;
-      var CROSSFADE_MS = 1000;
       montageVideoLayer.innerHTML = '';
 
-      var pending = {};
-
-      // Playing each clip as two simultaneous videos (a normal one plus a
-      // blurred duplicate behind it) is what causes lag on phones — most
-      // phones only have one hardware video decoder, so the second copy
-      // falls back to slow software decoding and drifts out of sync. On
-      // touch devices we skip the blurred duplicate and just fill the
-      // screen with the single video instead (cropped, not letterboxed).
+      // On mobile, most phones have exactly ONE hardware video decoder.
+      // Running two <video> elements at once (the old blurred-duplicate
+      // background, or even just the outgoing + incoming clip overlapping
+      // during a long crossfade) forces one of them into slow software
+      // decoding, which is what caused the stutter/lag/desync. So on
+      // mobile we: (1) never render the blurred duplicate, (2) cut
+      // between clips almost instantly instead of a long crossfade, and
+      // (3) fully release each clip's decoder the moment we're done with
+      // it, instead of leaving it lingering in the DOM.
       var isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+      var CROSSFADE_MS = isMobile ? 150 : 1000;
+      // Mobile networks are slower and less predictable, so give the next
+      // clip more of a head start before it's actually needed.
+      var PRELOAD_LEAD_MS = isMobile ? 3500 : 2000;
+
+      var pending = {};
 
       function buildClipElements(i) {
         var wrap = document.createElement('div');
@@ -2311,6 +2317,7 @@
         fg.src = 'clip ' + (i + 1) + '.mp4';
         fg.muted = true;
         fg.playsInline = true;
+        fg.preload = 'auto';
         if (isMobile) {
           fg.style.objectFit = 'cover'; // fill the screen instead of letterboxing
         }
@@ -2322,6 +2329,20 @@
         return { wrap: wrap, fg: fg, bg: bg };
       }
 
+      // Fully tears down a clip's video elements — pauses, clears the
+      // source, and calls load() to release the decoder/buffer right
+      // away, instead of just detaching the element and hoping the
+      // browser garbage-collects it in time.
+      function releaseClip(built) {
+        [built.fg, built.bg].forEach(function (v) {
+          if (!v) return;
+          v.pause();
+          v.removeAttribute('src');
+          v.load();
+        });
+        if (built.wrap && built.wrap.parentNode) built.wrap.parentNode.removeChild(built.wrap);
+      }
+
       // Quietly creates clip i's video elements and starts them loading in
       // the background, WITHOUT showing them — just one clip ahead at a
       // time, never all of them, so this can't cause the earlier lag.
@@ -2330,15 +2351,14 @@
         pending[i] = buildClipElements(i);
       }
 
-      // Plays clip index i. prevWrap (if any) is the clip currently showing —
-      // it's kept visible until clip i is verified ready to play, so the
-      // screen is never black waiting on a download.
-      function playClip(i, prevWrap) {
+      // Plays clip index i. prevBuilt (if any) is the clip currently
+      // showing — it's kept visible until clip i is verified ready to
+      // play, so the screen is never black waiting on a download, but it
+      // is released immediately afterwards so only one decoder is ever
+      // active on mobile.
+      function playClip(i, prevBuilt) {
         if (i >= CLIP_COUNT) {
-          if (prevWrap) {
-            prevWrap.classList.remove('is-active');
-            setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
-          }
+          if (prevBuilt) releaseClip(prevBuilt);
           setTimeout(goToYearPage, 1800);
           return;
         }
@@ -2373,33 +2393,35 @@
             onFirstClipReady();
           }
 
-          // Now that this clip is safely showing, fade the previous one out
-          // and remove it from the page entirely (freeing its memory/data,
-          // same as the memory sections clearing out old elements).
-          if (prevWrap) {
-            setTimeout(function () {
-              prevWrap.classList.remove('is-active');
-              setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
-            }, 0);
+          // Now that this clip is safely showing, fade the previous one
+          // out and fully release its decoder — on mobile this happens
+          // almost immediately so two clips are never decoding at once.
+          if (prevBuilt) {
+            setTimeout(function () { releaseClip(prevBuilt); }, CROSSFADE_MS);
           }
 
-          // Give just the NEXT clip a couple seconds' head start while this
-          // one plays — one clip ahead only, so this stays lightweight.
-          setTimeout(function () { prepareClip(i + 1); }, 2000);
+          // Give just the NEXT clip a head start while this one plays —
+          // one clip ahead only, so this stays lightweight, but longer on
+          // mobile since downloads take more time there.
+          setTimeout(function () { prepareClip(i + 1); }, PRELOAD_LEAD_MS);
 
           var advanced = false;
           function goNext() {
             if (advanced) return;
             advanced = true;
-            playClip(i + 1, wrap);
+            playClip(i + 1, built);
           }
 
           fg.onended = goNext;
           setTimeout(goNext, MAX_CLIP_SECONDS * 1000);
         }
 
-        // readyState 3+ means it has enough data to play through smoothly.
-        var requiredState = 3;
+        // readyState 3 (HAVE_FUTURE_DATA) is only "enough to start", not
+        // "enough to play through smoothly" — on mobile that gap is what
+        // caused clips to start and then immediately stutter waiting on
+        // more data. Mobile waits for readyState 4 (HAVE_ENOUGH_DATA)
+        // instead, i.e. a full, playable buffer, before switching over.
+        var requiredState = isMobile ? 4 : 3;
         function bothReady() {
           return fg.readyState >= requiredState && (!bg || bg.readyState >= requiredState);
         }
@@ -2407,12 +2429,15 @@
         if (bothReady()) {
           reallyStart();
         } else {
+          var evt = isMobile ? 'canplaythrough' : 'canplay';
           var onCanPlay = function () { if (bothReady()) reallyStart(); };
-          fg.addEventListener('canplay', onCanPlay);
-          if (bg) bg.addEventListener('canplay', onCanPlay);
+          fg.addEventListener(evt, onCanPlay);
+          if (bg) bg.addEventListener(evt, onCanPlay);
           // Safety net: don't wait forever if something's gone wrong with
           // this particular file — move on rather than freezing the page.
-          setTimeout(reallyStart, 4000);
+          // Mobile gets a longer grace period so it doesn't get forced
+          // into playing a half-buffered clip and stuttering anyway.
+          setTimeout(reallyStart, isMobile ? 7000 : 4000);
         }
       }
 
