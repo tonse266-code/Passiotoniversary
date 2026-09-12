@@ -2276,27 +2276,13 @@
 
       playClip(0, null);
 
-      // Plays clip index i. prevWrap (if any) is the clip currently showing —
-      // it's kept visible until clip i is verified ready to play, so the
-      // screen is never black waiting on a download. Each clip's video
-      // elements are created fresh right here (not pre-built on page load),
-      // same approach as the memory sections earlier in this site.
-      function playClip(i, prevWrap) {
-        if (i >= CLIP_COUNT) {
-          if (prevWrap) {
-            prevWrap.classList.remove('is-active');
-            setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
-          }
-          setTimeout(goToYearPage, 1800);
-          return;
-        }
+      var pending = {};
 
-        // Only once the montage is halfway through do we start quietly
-        // building the year-page's photo grid — by then the earlier clips
-        // have already had a clear run at the bandwidth.
-        if (i === Math.floor(CLIP_COUNT / 2) && !yearBoxesBuilt) {
-          buildYearBoxes();
-        }
+      // Quietly creates clip i's video elements and starts them loading in
+      // the background, WITHOUT showing them — just one clip ahead at a
+      // time, never all of them, so this can't cause the earlier lag.
+      function prepareClip(i) {
+        if (i >= CLIP_COUNT || pending[i]) return;
 
         var wrap = document.createElement('div');
         wrap.className = 'montage-clip-wrap';
@@ -2315,7 +2301,55 @@
 
         wrap.appendChild(bg);
         wrap.appendChild(fg);
-        montageVideoLayer.appendChild(wrap);
+        montageVideoLayer.appendChild(wrap); // invisible until it gets 'is-active'
+
+        pending[i] = { wrap: wrap, fg: fg, bg: bg };
+      }
+
+      // Plays clip index i. prevWrap (if any) is the clip currently showing —
+      // it's kept visible until clip i is verified ready to play, so the
+      // screen is never black waiting on a download.
+      function playClip(i, prevWrap) {
+        if (i >= CLIP_COUNT) {
+          if (prevWrap) {
+            prevWrap.classList.remove('is-active');
+            setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
+          }
+          setTimeout(goToYearPage, 1800);
+          return;
+        }
+
+        // Only once the montage is halfway through do we start quietly
+        // building the year-page's photo grid — by then the earlier clips
+        // have already had a clear run at the bandwidth.
+        if (i === Math.floor(CLIP_COUNT / 2) && !yearBoxesBuilt) {
+          buildYearBoxes();
+        }
+
+        var wrap, fg, bg;
+        if (pending[i]) {
+          wrap = pending[i].wrap; fg = pending[i].fg; bg = pending[i].bg;
+          delete pending[i];
+        } else {
+          wrap = document.createElement('div');
+          wrap.className = 'montage-clip-wrap';
+
+          bg = document.createElement('video');
+          bg.className = 'montage-clip-bg';
+          bg.src = 'clip ' + (i + 1) + '.mp4';
+          bg.muted = true;
+          bg.playsInline = true;
+
+          fg = document.createElement('video');
+          fg.className = 'montage-clip';
+          fg.src = 'clip ' + (i + 1) + '.mp4';
+          fg.muted = true;
+          fg.playsInline = true;
+
+          wrap.appendChild(bg);
+          wrap.appendChild(fg);
+          montageVideoLayer.appendChild(wrap);
+        }
 
         var started = false;
 
@@ -2340,6 +2374,10 @@
               setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
             }, 0);
           }
+
+          // Give just the NEXT clip a couple seconds' head start while this
+          // one plays — one clip ahead only, so this stays lightweight.
+          setTimeout(function () { prepareClip(i + 1); }, 2000);
 
           var advanced = false;
           function goNext() {
