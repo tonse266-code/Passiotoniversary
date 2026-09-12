@@ -2389,9 +2389,7 @@
         }
 
         // readyState 3+ means it has enough data to play through smoothly.
-        // For the very first clip (no previous clip to fall back on) we
-        // hold out for full readiness — readyState 4 — to avoid a stutter.
-        var requiredState = prevWrap ? 3 : 4;
+        var requiredState = 3;
         function bothReady() {
           return fg.readyState >= requiredState && bg.readyState >= requiredState;
         }
@@ -2404,7 +2402,7 @@
           bg.addEventListener('canplay', onCanPlay);
           // Safety net: don't wait forever if something's gone wrong with
           // this particular file — move on rather than freezing the page.
-          setTimeout(reallyStart, 8000);
+          setTimeout(reallyStart, 4000);
         }
       }
 
