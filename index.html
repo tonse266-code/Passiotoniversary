@@ -1573,24 +1573,7 @@
   </div>
 
   <section class="montage-section" id="memoryMontage">
-    <div class="montage-video-layer" id="montageVideoLayer">
-      <div class="montage-clip-wrap" data-clip="1"><video class="montage-clip-bg" src="clip 1.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 1.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="2"><video class="montage-clip-bg" src="clip 2.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 2.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="3"><video class="montage-clip-bg" src="clip 3.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 3.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="4"><video class="montage-clip-bg" src="clip 4.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 4.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="5"><video class="montage-clip-bg" src="clip 5.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 5.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="6"><video class="montage-clip-bg" src="clip 6.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 6.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="7"><video class="montage-clip-bg" src="clip 7.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 7.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="8"><video class="montage-clip-bg" src="clip 8.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 8.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="9"><video class="montage-clip-bg" src="clip 9.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 9.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="10"><video class="montage-clip-bg" src="clip 10.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 10.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="11"><video class="montage-clip-bg" src="clip 11.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 11.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="12"><video class="montage-clip-bg" src="clip 12.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 12.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="13"><video class="montage-clip-bg" src="clip 13.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 13.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="14"><video class="montage-clip-bg" src="clip 14.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 14.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="15"><video class="montage-clip-bg" src="clip 15.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 15.mp4" muted playsinline preload="none"></video></div>
-      <div class="montage-clip-wrap" data-clip="16"><video class="montage-clip-bg" src="clip 16.mp4" muted playsinline preload="none"></video><video class="montage-clip" src="clip 16.mp4" muted playsinline preload="none"></video></div>
-    </div>
+    <div class="montage-video-layer" id="montageVideoLayer"></div>
 
     <div class="montage-grid" id="montageGrid"></div>
   </section>
@@ -2178,7 +2161,8 @@
     }
 
     var grid = document.getElementById('montageGrid');
-    var clipWraps = document.querySelectorAll('#montageVideoLayer .montage-clip-wrap');
+    var montageVideoLayer = document.getElementById('montageVideoLayer');
+    var CLIP_COUNT = 16;
     var cols = 4;
     var rows = 4;
     var cells = [];
@@ -2224,16 +2208,6 @@
       var perCellStagger = 720;
       var blackHold = 1200;
       var colorStagger = 360;
-
-      // Clip 1 has no previous clip to hold onto while it loads, so give it
-      // a real head start using the ~19 seconds of tile-reveal/color
-      // animation time below (safe to do for just this one clip).
-      if (clipWraps.length) {
-        var firstFg = clipWraps[0].querySelector('.montage-clip');
-        var firstBg = clipWraps[0].querySelector('.montage-clip-bg');
-        firstFg.preload = 'auto'; firstFg.load();
-        firstBg.preload = 'auto'; firstBg.load();
-      }
 
       cells.forEach(function (item) {
         item.img.style.transition = 'none';
@@ -2293,59 +2267,69 @@
     function startClips() {
       var MAX_CLIP_SECONDS = 10;
       var CROSSFADE_MS = 1000;
-      clipWraps.forEach(function (wrap) { wrap.classList.remove('is-active'); });
+      montageVideoLayer.innerHTML = '';
 
       playClip(0, null);
 
       // Plays clip index i. prevWrap (if any) is the clip currently showing —
       // it's kept visible until clip i is verified ready to play, so the
-      // screen is never black waiting on a download.
+      // screen is never black waiting on a download. Each clip's video
+      // elements are created fresh right here (not pre-built on page load),
+      // same approach as the memory sections earlier in this site.
       function playClip(i, prevWrap) {
-        if (i >= clipWraps.length) {
-          if (prevWrap) prevWrap.classList.remove('is-active');
+        if (i >= CLIP_COUNT) {
+          if (prevWrap) {
+            prevWrap.classList.remove('is-active');
+            setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
+          }
           setTimeout(goToYearPage, 1800);
           return;
         }
 
-        var wrap = clipWraps[i];
-        var fg = wrap.querySelector('.montage-clip');
-        var bg = wrap.querySelector('.montage-clip-bg');
-        var started = false;
-
         // Only once the montage is halfway through do we start quietly
         // building the year-page's photo grid — by then the earlier clips
         // have already had a clear run at the bandwidth.
-        if (i === Math.floor(clipWraps.length / 2) && !yearBoxesBuilt) {
+        if (i === Math.floor(CLIP_COUNT / 2) && !yearBoxesBuilt) {
           buildYearBoxes();
         }
+
+        var wrap = document.createElement('div');
+        wrap.className = 'montage-clip-wrap';
+
+        var bg = document.createElement('video');
+        bg.className = 'montage-clip-bg';
+        bg.src = 'clip ' + (i + 1) + '.mp4';
+        bg.muted = true;
+        bg.playsInline = true;
+
+        var fg = document.createElement('video');
+        fg.className = 'montage-clip';
+        fg.src = 'clip ' + (i + 1) + '.mp4';
+        fg.muted = true;
+        fg.playsInline = true;
+
+        wrap.appendChild(bg);
+        wrap.appendChild(fg);
+        montageVideoLayer.appendChild(wrap);
+
+        var started = false;
 
         function reallyStart() {
           if (started) return;
           started = true;
 
-          fg.currentTime = 0;
-          bg.currentTime = 0;
           fg.play();
           bg.play();
           wrap.classList.add('is-active');
 
-          // Now that this clip is safely showing, fade the previous one out.
+          // Now that this clip is safely showing, fade the previous one out
+          // and remove it from the page entirely (freeing its memory/data,
+          // same as the memory sections clearing out old elements).
           if (prevWrap) {
             setTimeout(function () {
               prevWrap.classList.remove('is-active');
-              var pfg = prevWrap.querySelector('.montage-clip');
-              var pbg = prevWrap.querySelector('.montage-clip-bg');
-              setTimeout(function () { pfg.pause(); pbg.pause(); }, CROSSFADE_MS);
+              setTimeout(function () { prevWrap.remove(); }, CROSSFADE_MS);
             }, 0);
-          }
-
-          // Get a head start on the clip after this one, while this one plays.
-          var next = clipWraps[i + 1];
-          if (next) {
-            var nfg = next.querySelector('.montage-clip');
-            var nbg = next.querySelector('.montage-clip-bg');
-            if (nfg.preload !== 'auto') { nfg.preload = 'auto'; nfg.load(); }
-            if (nbg.preload !== 'auto') { nbg.preload = 'auto'; nbg.load(); }
           }
 
           var advanced = false;
@@ -2359,14 +2343,9 @@
           setTimeout(goNext, MAX_CLIP_SECONDS * 1000);
         }
 
-        // Make sure this clip is actually loading.
-        if (fg.preload !== 'auto') { fg.preload = 'auto'; fg.load(); }
-        if (bg.preload !== 'auto') { bg.preload = 'auto'; bg.load(); }
-
         // readyState 3+ means it has enough data to play through smoothly.
-        // For the very first clip (no previous clip to fall back on, and it
-        // already had a long head start) we hold out for full readiness —
-        // readyState 4 — to avoid an initial stutter.
+        // For the very first clip (no previous clip to fall back on) we
+        // hold out for full readiness — readyState 4 — to avoid a stutter.
         var requiredState = prevWrap ? 3 : 4;
         function bothReady() {
           return fg.readyState >= requiredState && bg.readyState >= requiredState;
