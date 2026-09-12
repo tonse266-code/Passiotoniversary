@@ -1987,15 +1987,24 @@
     });
 
     var touchStartX = null;
-    book.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, {passive:true});
+    var touchStartY = null;
+    book.addEventListener('touchstart', function(e){
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, {passive:true});
     book.addEventListener('touchend', function(e){
       if (touchStartX === null) return;
       var dx = e.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(dx) > 60){
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      // Only treat this as a page-turn swipe if it's clearly more horizontal
+      // than vertical, and big enough — otherwise a normal scroll gesture
+      // (which drifts sideways a little) was accidentally flipping pages.
+      if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 2){
         if (dx < 0){ if (current === total) transitionToMontage(); else goTo(current + 1); }
         else goTo(current - 1);
       }
       touchStartX = null;
+      touchStartY = null;
     }, {passive:true});
 
     var resizeTimer;
@@ -2276,32 +2285,49 @@
 
       var pending = {};
 
-      // Quietly creates clip i's video elements and starts them loading in
-      // the background, WITHOUT showing them — just one clip ahead at a
-      // time, never all of them, so this can't cause the earlier lag.
-      function prepareClip(i) {
-        if (i >= CLIP_COUNT || pending[i]) return;
+      // Playing each clip as two simultaneous videos (a normal one plus a
+      // blurred duplicate behind it) is what causes lag on phones — most
+      // phones only have one hardware video decoder, so the second copy
+      // falls back to slow software decoding and drifts out of sync. On
+      // touch devices we skip the blurred duplicate and just fill the
+      // screen with the single video instead (cropped, not letterboxed).
+      var isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
 
+      function buildClipElements(i) {
         var wrap = document.createElement('div');
         wrap.className = 'montage-clip-wrap';
 
-        var bg = document.createElement('video');
-        bg.className = 'montage-clip-bg';
-        bg.src = 'clip ' + (i + 1) + '.mp4';
-        bg.muted = true;
-        bg.playsInline = true;
+        var bg = null;
+        if (!isMobile) {
+          bg = document.createElement('video');
+          bg.className = 'montage-clip-bg';
+          bg.src = 'clip ' + (i + 1) + '.mp4';
+          bg.muted = true;
+          bg.playsInline = true;
+        }
 
         var fg = document.createElement('video');
         fg.className = 'montage-clip';
         fg.src = 'clip ' + (i + 1) + '.mp4';
         fg.muted = true;
         fg.playsInline = true;
+        if (isMobile) {
+          fg.style.objectFit = 'cover'; // fill the screen instead of letterboxing
+        }
 
-        wrap.appendChild(bg);
+        if (bg) wrap.appendChild(bg);
         wrap.appendChild(fg);
         montageVideoLayer.appendChild(wrap); // invisible until it gets 'is-active'
 
-        pending[i] = { wrap: wrap, fg: fg, bg: bg };
+        return { wrap: wrap, fg: fg, bg: bg };
+      }
+
+      // Quietly creates clip i's video elements and starts them loading in
+      // the background, WITHOUT showing them — just one clip ahead at a
+      // time, never all of them, so this can't cause the earlier lag.
+      function prepareClip(i) {
+        if (i >= CLIP_COUNT || pending[i]) return;
+        pending[i] = buildClipElements(i);
       }
 
       // Plays clip index i. prevWrap (if any) is the clip currently showing —
@@ -2324,30 +2350,14 @@
           buildYearBoxes();
         }
 
-        var wrap, fg, bg;
+        var built;
         if (pending[i]) {
-          wrap = pending[i].wrap; fg = pending[i].fg; bg = pending[i].bg;
+          built = pending[i];
           delete pending[i];
         } else {
-          wrap = document.createElement('div');
-          wrap.className = 'montage-clip-wrap';
-
-          bg = document.createElement('video');
-          bg.className = 'montage-clip-bg';
-          bg.src = 'clip ' + (i + 1) + '.mp4';
-          bg.muted = true;
-          bg.playsInline = true;
-
-          fg = document.createElement('video');
-          fg.className = 'montage-clip';
-          fg.src = 'clip ' + (i + 1) + '.mp4';
-          fg.muted = true;
-          fg.playsInline = true;
-
-          wrap.appendChild(bg);
-          wrap.appendChild(fg);
-          montageVideoLayer.appendChild(wrap);
+          built = buildClipElements(i);
         }
+        var wrap = built.wrap, fg = built.fg, bg = built.bg;
 
         var started = false;
 
@@ -2356,7 +2366,7 @@
           started = true;
 
           fg.play();
-          bg.play();
+          if (bg) bg.play();
           wrap.classList.add('is-active');
 
           if (i === 0 && onFirstClipReady) {
@@ -2391,7 +2401,7 @@
         // readyState 3+ means it has enough data to play through smoothly.
         var requiredState = 3;
         function bothReady() {
-          return fg.readyState >= requiredState && bg.readyState >= requiredState;
+          return fg.readyState >= requiredState && (!bg || bg.readyState >= requiredState);
         }
 
         if (bothReady()) {
@@ -2399,7 +2409,7 @@
         } else {
           var onCanPlay = function () { if (bothReady()) reallyStart(); };
           fg.addEventListener('canplay', onCanPlay);
-          bg.addEventListener('canplay', onCanPlay);
+          if (bg) bg.addEventListener('canplay', onCanPlay);
           // Safety net: don't wait forever if something's gone wrong with
           // this particular file — move on rather than freezing the page.
           setTimeout(reallyStart, 4000);
