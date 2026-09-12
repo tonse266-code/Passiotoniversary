@@ -2252,19 +2252,24 @@
       var colorDone = fillDone + lastIndex * colorStagger + 1000;
 
       setTimeout(function () {
-        startClips();
-        cells.forEach(function (item, index) {
-          var col = parseInt(item.cell.dataset.col, 10);
-          setTimeout(function () {
-            item.cell.style.transition = 'opacity 0.4s ease-in, transform 0.5s cubic-bezier(.55,0,.85,.35)';
-            item.cell.style.opacity = '0';
-            item.cell.style.transform = 'translateY(120%) rotate(' + (col % 2 === 0 ? -8 : 8) + 'deg)';
-          }, index * 70);
+        // Start loading clip 1 now (this moment becomes its head start), but
+        // don't hide the photo grid until clip 1 actually confirms it's
+        // ready — that way the mosaic simply stays put a little longer if
+        // needed, instead of leaving a black gap behind it.
+        startClips(function () {
+          cells.forEach(function (item, index) {
+            var col = parseInt(item.cell.dataset.col, 10);
+            setTimeout(function () {
+              item.cell.style.transition = 'opacity 0.4s ease-in, transform 0.5s cubic-bezier(.55,0,.85,.35)';
+              item.cell.style.opacity = '0';
+              item.cell.style.transform = 'translateY(120%) rotate(' + (col % 2 === 0 ? -8 : 8) + 'deg)';
+            }, index * 70);
+          });
         });
       }, colorDone);
     }
 
-    function startClips() {
+    function startClips(onFirstClipReady) {
       var MAX_CLIP_SECONDS = 10;
       var CROSSFADE_MS = 1000;
       montageVideoLayer.innerHTML = '';
@@ -2321,6 +2326,10 @@
           fg.play();
           bg.play();
           wrap.classList.add('is-active');
+
+          if (i === 0 && onFirstClipReady) {
+            onFirstClipReady();
+          }
 
           // Now that this clip is safely showing, fade the previous one out
           // and remove it from the page entirely (freeing its memory/data,
